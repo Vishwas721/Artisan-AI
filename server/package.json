@@ -8,5 +8,10 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@dfinity/agent": "^3.2.6",
+    "@dfinity/candid": "^3.2.6",
+    "@dfinity/principal": "^3.2.6"
+  }
 }
