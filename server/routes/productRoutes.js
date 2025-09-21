@@ -1,9 +1,9 @@
 import express from 'express';
-import { createProduct, getProductById, generateSocialPlan, verifyCertificate } from '../controllers/productController.js';
+
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
-
+import { createProduct, getProductById, generateSocialPlan, verifyCertificate, updateProduct, regenerateContent } from '../controllers/productController.js';
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -29,5 +29,6 @@ router.get('/products/:id', getProductById);
 router.post('/products', upload.single('image'), createProduct);
 router.post('/products/:id/social-plan', generateSocialPlan);
 router.get('/verify/:certId', verifyCertificate);
-
+router.put('/products/:id', updateProduct);
+router.post('/products/:id/regenerate', regenerateContent);
 export default router;

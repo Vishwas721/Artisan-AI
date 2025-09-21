@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProductById, generateSocialPlan } from '../services/api';
+import { getProductById, generateSocialPlan, updateProduct, regenerateContent } from '../services/api';
 
 const ProductPage = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [lang, setLang] = useState('en'); // 'en' for English
+
+  // Editable content states
+  const [editableStory, setEditableStory] = useState({});
+  const [editableDesc, setEditableDesc] = useState({});
+
+  const [lang, setLang] = useState('en');
   const [plan, setPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(false);
 
@@ -17,6 +22,9 @@ const ProductPage = () => {
         setLoading(true);
         const response = await getProductById(id);
         setProduct(response.data);
+        // Initialize editable states with fetched data
+        setEditableStory(response.data.ai_story);
+        setEditableDesc(response.data.ai_description);
       } catch (err) {
         setError('Failed to fetch product details.');
       } finally {
@@ -26,17 +34,47 @@ const ProductPage = () => {
     fetchProduct();
   }, [id]);
 
-  const handleGeneratePlan = async () => {
-    setPlanLoading(true);
+  const handleSaveChanges = async () => {
     try {
-      const response = await generateSocialPlan(id);
-      setPlan(response.data);
+      await updateProduct(id, {
+        ai_story: editableStory,
+        ai_description: editableDesc
+      });
+      alert('Changes saved!');
     } catch (err) {
-      console.error("Failed to generate plan");
-    } finally {
-      setPlanLoading(false);
+      alert('Failed to save changes.');
     }
   };
+
+  const handleRegenerate = async (field, tone) => {
+    const originalContent = (field === 'story') ? editableStory[lang]?.story : editableDesc[lang]?.description;
+
+    try {
+      const response = await regenerateContent(id, { field, tone, originalContent });
+      const newContent = response.data.newContent;
+
+      if (field === 'story') {
+        setEditableStory(prev => ({ ...prev, [lang]: { ...prev[lang], story: newContent }}));
+      } else {
+        setEditableDesc(prev => ({ ...prev, [lang]: { ...prev[lang], description: newContent }}));
+      }
+    } catch (err) {
+      alert(`Failed to regenerate ${field}.`);
+    }
+  };
+
+  const handleGeneratePlan = async () => {
+  setPlanLoading(true);
+  try {
+    const response = await generateSocialPlan(id);
+    setPlan(response.data);
+  } catch (err) {
+    console.error("Failed to generate social plan:", err);
+    alert("Failed to generate the social plan.");
+  } finally {
+    setPlanLoading(false);
+  }
+};
 
   if (loading) return <div>Loading product details...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
@@ -47,17 +85,29 @@ const ProductPage = () => {
   return (
     <div>
       <h1>{product.product_name}</h1>
-      <img src={`http://127.0.0.1:5001/${product.image_url}`} alt={product.product_name} width="400" />
-      
-      <div>
-        {languages.map(l => <button key={l} onClick={() => setLang(l)}>{l.toUpperCase()}</button>)}
-      </div>
+      <img src={product.image_url} alt={product.product_name} width="400" />
+
+      <div>{languages.map(l => <button key={l} onClick={() => setLang(l)}>{l.toUpperCase()}</button>)}</div>
 
       <h2>The Story Behind the Craft</h2>
-      <p>{product.ai_story[lang]?.story || 'Not available'}</p>
+      <textarea 
+        value={editableStory[lang]?.story || ''} 
+        onChange={(e) => setEditableStory(prev => ({...prev, [lang]: {...prev[lang], story: e.target.value}}))} 
+        rows="6" style={{width: '100%'}} 
+      />
+      <button onClick={() => handleRegenerate('story', 'more poetic')}>Make More Poetic</button>
+      <button onClick={() => handleRegenerate('story', 'shorter')}>Make Shorter</button>
+
       <h2>Description</h2>
-      <p>{product.ai_description[lang]?.description || 'Not available'}</p>
-      
+      <textarea 
+        value={editableDesc[lang]?.description || ''}
+        onChange={(e) => setEditableDesc(prev => ({...prev, [lang]: {...prev[lang], description: e.target.value}}))}
+        rows="6" style={{width: '100%'}}
+      />
+      <button onClick={() => handleRegenerate('description', 'more professional')}>More Professional</button>
+
+      <button onClick={handleSaveChanges} style={{marginTop: '10px', background: 'green', color: 'white'}}>Save All Changes</button>
+
       <h3>Blockchain Certificate ID:</h3>
       <Link to={`/verify/${product.blockchain_cert_id}`}>{product.blockchain_cert_id}</Link>
             {product.hashtags && product.hashtags.length > 0 && (

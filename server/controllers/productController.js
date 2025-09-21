@@ -151,3 +151,44 @@ export const verifyCertificate = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// Function to save edited content
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Expecting the full JSONB objects for description and story
+    const { ai_description, ai_story } = req.body;
+
+    await pool.query(
+      "UPDATE products SET ai_description = $1, ai_story = $2 WHERE id = $3",
+      [ai_description, ai_story, id]
+    );
+
+    res.status(200).json({ message: "Product updated successfully" });
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// Function to regenerate a specific piece of content
+export const regenerateContent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { field, tone, originalContent } = req.body; // e.g., field: "story", tone: "more poetic"
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `You are a creative writing assistant. Rewrite the following text which is a product ${field}, to make it "${tone}". Return ONLY the rewritten text as a single string.
+
+    Original Text: "${originalContent}"`;
+
+    const result = await model.generateContent(prompt);
+    const newText = result.response.text().trim();
+
+    res.json({ newContent: newText });
+  } catch (error) {
+    console.error("Error regenerating content:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

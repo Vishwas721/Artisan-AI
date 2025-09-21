@@ -25,3 +25,11 @@ export const verifyCertificate = (certId) => {
 export const saveArtisanProfile = (profileData) => {
   return apiClient.put('/artisans/profile', profileData);
 };
+
+export const updateProduct = (id, productData) => {
+  return apiClient.put(`/products/${id}`, productData);
+};
+
+export const regenerateContent = (id, regenerationRequest) => {
+  return apiClient.post(`/products/${id}/regenerate`, regenerationRequest);
+};
