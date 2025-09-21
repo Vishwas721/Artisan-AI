@@ -33,3 +33,6 @@ export const updateProduct = (id, productData) => {
 export const regenerateContent = (id, regenerationRequest) => {
   return apiClient.post(`/products/${id}/regenerate`, regenerationRequest);
 };
+export const getShowcase = (artisanId) => {
+  return apiClient.get(`/showcase/${artisanId}`);
+};

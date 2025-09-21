@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createProduct } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom'; // Add this import
 
 const AddCraftPage = () => {
   const navigate = useNavigate();
@@ -64,6 +65,10 @@ data.append('multiPurpose', formData.multiPurpose);// Add language to form data
 
   return (
     <div>
+          <div style={{ padding: '10px', background: '#f0f0f0', textAlign: 'center' }}>
+      <Link to="/showcase/1">View My Public Showcase</Link>
+    </div>
+
       <h1>Add Your Craft</h1>
       <form onSubmit={handleSubmit}>
         <input type="text" name="productName" placeholder="Product Name" onChange={handleInputChange} required />

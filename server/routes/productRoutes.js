@@ -3,7 +3,7 @@ import express from 'express';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import { createProduct, getProductById, generateSocialPlan, verifyCertificate, updateProduct, regenerateContent } from '../controllers/productController.js';
+import { createProduct, getProductById, generateSocialPlan, verifyCertificate, updateProduct, regenerateContent,getShowcaseByArtisan} from '../controllers/productController.js';
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -23,7 +23,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 const router = express.Router();
-
+router.get('/showcase/:artisanId', getShowcaseByArtisan);
 // Your routes remain the same
 router.get('/products/:id', getProductById);
 router.post('/products', upload.single('image'), createProduct);

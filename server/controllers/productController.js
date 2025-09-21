@@ -192,3 +192,17 @@ export const regenerateContent = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+export const getShowcaseByArtisan = async (req, res) => {
+  try {
+    const { artisanId } = req.params;
+    const products = await pool.query(
+      "SELECT id, product_name, image_url FROM products WHERE artisan_id = $1 ORDER BY created_at DESC", 
+      [artisanId]
+    );
+    res.json(products.rows);
+  } catch (error)
+  {
+    console.error("Error fetching showcase:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
