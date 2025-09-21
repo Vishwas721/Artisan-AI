@@ -7,31 +7,48 @@ const ShowcasePage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Styles for the grid and cards
+  const styles = {
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+      gap: '30px',
+    },
+    card: {
+      backgroundColor: 'var(--card-background)',
+      borderRadius: '16px',
+      overflow: 'hidden',
+      boxShadow: '0 4px 12px var(--shadow-color)',
+      textDecoration: 'none',
+      color: 'var(--text-color)',
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    },
+    cardImage: {
+      width: '100%',
+      height: '220px',
+      objectFit: 'cover',
+    },
+    cardContent: {
+      padding: '16px 20px',
+    },
+  };
+
   useEffect(() => {
-    const fetchShowcase = async () => {
-      try {
-        const response = await getShowcase(artisanId);
-        setProducts(response.data);
-      } catch (err) {
-        console.error("Failed to fetch showcase", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchShowcase();
+    // Fetch showcase data...
+    getShowcase(artisanId).then(res => setProducts(res.data)).finally(() => setLoading(false));
   }, [artisanId]);
 
   if (loading) return <div>Loading showcase...</div>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Artisan Showcase</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+    <div>
+      <h1>My Showcase</h1>
+      <div style={styles.grid}>
         {products.map(product => (
-          <Link to={`/products/${product.id}`} key={product.id} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div style={{ border: '1px solid #eee', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-              <img src={product.image_url} alt={product.product_name} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
-              <h3 style={{ padding: '10px' }}>{product.product_name}</h3>
+          <Link to={`/products/${product.id}`} key={product.id} style={styles.card}>
+            <img src={product.image_url} alt={product.product_name} style={styles.cardImage} />
+            <div style={styles.cardContent}>
+              <h3>{product.product_name}</h3>
             </div>
           </Link>
         ))}
