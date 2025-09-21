@@ -1,68 +1,86 @@
+/* 1. Import a clean, modern font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+
+/* 2. Define your color palette as CSS variables for easy use */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --primary-color: #3F51B5;   /* Deep Indigo */
+  --secondary-color: #D77A61; /* Terracotta */
+  --accent-color: #FBC02D;    /* Mustard Yellow */
+  --background-color: #FAF9F6; /* Soft Cream */
+  --text-color: #333333;       /* Charcoal */
+  --light-gray: #f0f0f0;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
+/* 3. Apply the base styles to your app */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.App {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 24px;
 }
 
-button {
+/* 4. Consistent styling for input fields and textareas */
+input[type="text"],
+input[type="file"],
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
   border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  box-sizing: border-box; 
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* 5. Button Styling */
+button {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-right: 8px; /* Add some space between buttons */
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Primary Button Style (for main actions) */
+button[type="submit"], .btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+button[type="submit"]:hover:not(:disabled), .btn-primary:hover:not(:disabled) {
+  background-color: #303F9F; /* A slightly darker Indigo */
+}
+
+/* Secondary Button Style (for other actions) */
+button.btn-secondary {
+  background-color: var(--light-gray);
+  color: var(--text-color);
+  border: 1px solid #ccc;
+}
+
+button.btn-secondary:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+h1, h2, h3 {
+  font-weight: 700;
+  color: var(--primary-color);
 }

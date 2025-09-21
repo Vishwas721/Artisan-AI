@@ -96,7 +96,7 @@ const ProductPage = () => {
         rows="6" style={{width: '100%'}} 
       />
       <button onClick={() => handleRegenerate('story', 'more poetic')}>Make More Poetic</button>
-      <button onClick={() => handleRegenerate('story', 'shorter')}>Make Shorter</button>
+      <button onClick={() => handleRegenerate('story', 'shorter')} className="btn-secondary">Make Shorter</button>
 
       <h2>Description</h2>
       <textarea 
