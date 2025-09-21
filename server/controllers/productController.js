@@ -9,18 +9,17 @@ const canisterId = "uxrrr-q7777-77774-qaaaq-cai"; // Your Canister ID
 
 // --- HELPER FUNCTIONS ---
 const getCanister = async () => {
-  // Use the public ngrok URL from your terminal
-  const agent = new HttpAgent({ host: "https://30ea984be3df.ngrok-free.app" }); 
+  // Point directly to your local replica
+  const agent = new HttpAgent({ host: "http://127.0.0.1:4943" });
 
-  // You do not need fetchRootKey() for the live canister or ngrok
-  // await agent.fetchRootKey(); 
+  // This line is required for local development
+  await agent.fetchRootKey(); 
 
   return Actor.createActor(idlFactory, { 
     agent, 
-    canisterId: "uxrrr-q7777-77774-qaaaq-cai" // Use your LOCAL canister ID
+    canisterId: "uxrrr-q7777-77774-qaaaq-cai" // Your LOCAL canister ID
   });
 };
-
 // This function uses Gemini for analysis, creative writing, AND translation
 async function generateAIContent(imageUrl, productName, targetLanguage, brandProfile, details, targetAudience) {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -78,10 +77,11 @@ export const createProduct = async (req, res) => {
     );
 
     res.status(201).json({ product: newProduct.rows[0] });
-  } catch (error) {
-    console.error("Error creating product:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+} catch (error) {
+  // This logs the specific, human-readable error message
+  console.error("Error creating product:", error.detail || error.message); 
+  res.status(500).json({ error: "Internal Server Error" });
+}
 };
 
 export const getProductById = async (req, res) => {
@@ -92,10 +92,11 @@ export const getProductById = async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
     res.json(product.rows[0]);
-  } catch (error) {
-    console.error("Error fetching product:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+} catch (error) {
+  // This logs the specific, human-readable error message
+  console.error("Error creating product:", error.detail || error.message); 
+  res.status(500).json({ error: "Internal Server Error" });
+}
 };
 
 export const generateSocialPlan = async (req, res) => {
@@ -126,10 +127,11 @@ export const generateSocialPlan = async (req, res) => {
     const responseText = result.response.text().replace(/```json|```/g, "").trim();
     const plan = JSON.parse(responseText);
     res.json(plan);
-  } catch (error) {
-    console.error("Error generating social plan:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+} catch (error) {
+  // This logs the specific, human-readable error message
+  console.error("Error creating product:", error.detail || error.message); 
+  res.status(500).json({ error: "Internal Server Error" });
+}
 };
 
 export const verifyCertificate = async (req, res) => {
@@ -143,10 +145,11 @@ export const verifyCertificate = async (req, res) => {
     const story_from_blockchain = result[0] || "Record not found."; 
     
     res.json({ story_from_blockchain });
-  } catch (error) {
-    console.error("Error verifying certificate:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+} catch (error) {
+  // This logs the specific, human-readable error message
+  console.error("Error creating product:", error.detail || error.message); 
+  res.status(500).json({ error: "Internal Server Error" });
+}
 };
 
 export const updateProduct = async (req, res) => {
@@ -160,10 +163,11 @@ export const updateProduct = async (req, res) => {
     );
     
     res.status(200).json({ message: "Product updated successfully" });
-  } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+} catch (error) {
+  // This logs the specific, human-readable error message
+  console.error("Error creating product:", error.detail || error.message); 
+  res.status(500).json({ error: "Internal Server Error" });
+}
 };
 
 export const regenerateContent = async (req, res) => {
@@ -181,10 +185,11 @@ export const regenerateContent = async (req, res) => {
     const newText = result.response.text().trim();
     
     res.json({ newContent: newText });
-  } catch (error) {
-    console.error("Error regenerating content:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+} catch (error) {
+  // This logs the specific, human-readable error message
+  console.error("Error creating product:", error.detail || error.message); 
+  res.status(500).json({ error: "Internal Server Error" });
+}
 };
 
 export const getShowcaseByArtisan = async (req, res) => {
@@ -195,8 +200,9 @@ export const getShowcaseByArtisan = async (req, res) => {
       [artisanId]
     );
     res.json(products.rows);
-  } catch (error) {
-    console.error("Error fetching showcase:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+} catch (error) {
+  // This logs the specific, human-readable error message
+  console.error("Error creating product:", error.detail || error.message); 
+  res.status(500).json({ error: "Internal Server Error" });
+}
 };

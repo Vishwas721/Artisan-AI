@@ -1,4 +1,0 @@
-service : {
-  addRecord: (story: text) -> (text);
-  getRecord: (id: nat) -> (opt text) query;
-}
