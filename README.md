@@ -59,9 +59,9 @@ This feature automates the complex world of digital advertising.
 
 See ArtisanAI in action! Here is a quick walkthrough of our prototype, showcasing the journey of an artisan from onboarding to making their first AI-assisted sale.
 
-`[Link to your 3-minute video here OR embed a GIF of your prototype]`
 
-![ArtisanAI Demo GIF](https://your-gif-url.com/demo.gif)  ---
+
+Live Demo:((https://artisan-ai-one.vercel.app/))  ---
 
 ## 🛠️ Technology Stack
 
