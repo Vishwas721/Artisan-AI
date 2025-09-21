@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'https://artisan-ai-server.onrender.com/api', // Your live Render URL
+  baseURL: 'https://artisan-ai-1.onrender.com/api', // Paste the correct URL here
 });
 
 export const createProduct = (formData) => {
