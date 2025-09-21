@@ -68,7 +68,7 @@ For the product named "${productName}", analyze the provided image.
 Your task is to generate:
 1.  A "story": A short, personal story from '${details.artisanName}'s perspective with a strong emotional hook.
 2.  A "description": A poetic and highly practical description for an e-commerce site. You MUST include: dimensions ('${details.dimensions}'), approximate weight ('${details.approxWeight}'), care instructions ('${details.careInstructions}'), and multi-purpose suggestions ('${details.multiPurpose}').
-3.  "hashtags": Provide a valid JSON array of 12-15 relevant string hashtags (e.g., ["#bohodecor", "#mindfulhome", "#handcraftedart"]).
+3.  **"hashtags": Provide 12-15 relevant hashtags. The list MUST include a mix of broad, niche (#bohodecorindia), and value-based tags (#sustainableluxury, #consciousconsumer).**
 
 Return a valid JSON object where the top-level keys are "en" and "${targetLanguage}". Each of these keys must contain an object with its own "description", "story", and "hashtags".`;
  const imageResponse = await fetch(imageUrl);
@@ -116,11 +116,12 @@ const prompt = `You are a world-class social media strategist for an artisan. Th
 Create a 3-day promotional plan for Instagram.
 
 For each day's caption, you MUST:
-1.  Use a storytelling element from the artisan's personal story.
-2.  Include a UNIQUE and highly engaging call-to-action (CTA).
-3.  Day 1: Suggest an interactive element like an Instagram Story poll AND ask an open-ended question in the caption (e.g., "What cherished item...?")
-4.  Day 2: Ask a direct "this or that" question to spark comments (e.g., "Fruit basket or wall decor? Comment below!").
-5.  Day 3: Use scarcity/urgency and provide a crystal-clear CTA like "Only 3 remain! DM us 'ARTISAN' to reserve yours, or tap the link in our bio before they're gone."
+1.  **Keep the caption concise and use line breaks for easy mobile reading.**
+2.  Use a storytelling element from the artisan's personal story.
+3.  Include a UNIQUE and highly engaging call-to-action (CTA).
+4.  Day 1: Suggest an interactive element like a poll and ask an open-ended question.
+5.  Day 2: Ask a direct "this or that" question to spark comments.
+6.  Day 3: Use scarcity and provide a crystal-clear CTA like "DM us to reserve yours or click the link in our bio."
 
 Return a valid JSON array of objects, where each object has "day", "post_type", and "caption" keys.`;
     const result = await model.generateContent(prompt);
