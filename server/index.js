@@ -10,10 +10,12 @@ const port = process.env.PORT || 5001;
 
 // Configure CORS to allow requests specifically from your frontend
 const corsOptions = {
-  origin: 'http://localhost:5173', // Your Vite frontend URL
+  origin: [
+    'http://localhost:5173',                // Your local dev frontend
+    'https://artisan-ai-six.vercel.app'   // Your live Vercel frontend
+  ],
   optionsSuccessStatus: 200
 };
-
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/api', productRoutes);
