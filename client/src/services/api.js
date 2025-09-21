@@ -1,16 +1,23 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:5000/api', // Your backend server URL
-  headers: {
-    'Content-Type': 'multipart/form-data',
-  },
+  baseURL: 'http://127.0.0.1:5000/api', // Use IP to avoid network issues
 });
 
 export const createProduct = (formData) => {
-  return apiClient.post('/products', formData);
+  return apiClient.post('/products', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 };
+
 export const getProductById = (id) => {
-  // apiClient is already configured with the base URL
   return apiClient.get(`/products/${id}`);
+};
+
+export const generateSocialPlan = (id) => {
+  return apiClient.post(`/products/${id}/social-plan`);
+};
+
+export const verifyCertificate = (certId) => {
+  return apiClient.get(`/verify/${certId}`);
 };

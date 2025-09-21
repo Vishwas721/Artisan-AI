@@ -7,30 +7,67 @@ import { idlFactory } from '../canister/src/declarations/canister_backend/canist
 
 // Initialize Google AI Client
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const canisterId = "uxrrr-q7777-77774-qaaaq-cai"; // Your Canister ID
 
-// Your Canister ID
-const canisterId = "uxrrr-q7777-77774-qaaaq-cai";
+// --- HELPER FUNCTIONS ---
 
-// Function to create blockchain certificate
-export const createBlockchainCertificate = async (story) => {
+const getCanister = async () => {
   const agent = new HttpAgent({ host: "http://127.0.0.1:4943" });
   await agent.fetchRootKey(); // Required for local development
+  return Actor.createActor(idlFactory, { agent, canisterId });
+};
 
-  const canister = Actor.createActor(idlFactory, {
-    agent,
-    canisterId,
-  });
+async function generateAIContent(imagePath, productName, targetLanguage) {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  // Call the 'addRecord' function from your Motoko canister
-const certificateId = await canister.addRecord(story); // Correct// Correct for testing
-  return certificateId.toString();
+  const absoluteImagePath = path.join(process.cwd(), imagePath);
+  const imageBuffer = await fs.readFile(absoluteImagePath);
+  const imageBase64 = imageBuffer.toString("base64");
+
+  const prompt = `You are a marketing expert for handmade crafts. For the product named "${productName}", analyze the provided image.
+  Generate a compelling product description and a short, emotional story about the artisan's tradition.
+  Return a valid JSON object with two top-level keys: "en" and "${targetLanguage}".
+  Each key should contain an object with its own "description" and "story".`;
+
+  const imagePart = {
+    inlineData: { data: imageBase64, mimeType: "image/jpeg" },
+  };
+
+  const result = await model.generateContent([prompt, imagePart]);
+  const responseText = result.response.text().replace(/```json|```/g, "").trim();
+  return JSON.parse(responseText);
+}
+
+// --- CONTROLLER EXPORTS ---
+
+export const createProduct = async (req, res) => {
+  try {
+    const { productName, category, materials, targetLanguage } = req.body;
+    const relativeImagePath = req.file.path;
+
+    const aiContent = await generateAIContent(relativeImagePath, productName, targetLanguage);
+    const ai_story_en = aiContent.en.story; // Use English story for the certificate
+
+    const canister = await getCanister();
+    const blockchain_cert_id = (await canister.addRecord(ai_story_en)).toString();
+
+    const newProduct = await pool.query(
+      `INSERT INTO products (artisan_id, product_name, category, materials, image_url, ai_description, ai_story, blockchain_cert_id) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [1, productName, category, materials, relativeImagePath, aiContent, aiContent, blockchain_cert_id]
+    );
+
+    res.status(201).json({ product: newProduct.rows[0] });
+  } catch (error) {
+    console.error("Error creating product:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 export const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
     const product = await pool.query("SELECT * FROM products WHERE id = $1", [id]);
-
     if (product.rows.length === 0) {
       return res.status(404).json({ error: "Product not found" });
     }
@@ -41,73 +78,42 @@ export const getProductById = async (req, res) => {
   }
 };
 
-// Function to generate AI content from image and product name
-async function generateAIContent(imagePath, productName) {
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Correct
-
-  // Read image file using absolute path
-  const absoluteImagePath = path.join(process.cwd(), imagePath);
-  const imageBuffer = await fs.readFile(absoluteImagePath);
-  const imageBase64 = imageBuffer.toString("base64");
-
-  const prompt = `You are a marketing expert for handmade crafts. For the product named "${productName}", analyze the provided image and generate a compelling product description and a short, emotional story about the artisan's tradition. Return the response as a JSON object with two keys: "description" and "story".`;
-
-  const imagePart = {
-    inlineData: {
-      data: imageBase64,
-      mimeType: "image/jpeg", // adjust if using PNG
-    },
-  };
-
-  const result = await model.generateContent([prompt, imagePart]);
-  const responseText = result.response.text();
-
-  // Clean the response to make it valid JSON
-  const cleanedJsonString = responseText.replace(/```json|```/g, "").trim();
-  
-  let aiContent;
+export const generateSocialPlan = async (req, res) => {
   try {
-    aiContent = JSON.parse(cleanedJsonString);
-  } catch (err) {
-    console.error("Failed to parse AI response:", cleanedJsonString);
-    throw new Error("AI response parsing error");
-  }
+    const { id } = req.params;
+    const productResult = await pool.query("SELECT ai_story FROM products WHERE id = $1", [id]);
+    if (productResult.rows.length === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    const story = productResult.rows[0].ai_story.en.story; // Use English story
 
-  return aiContent;
-}
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = `You are a social media marketing expert for artisans. Based on this product story: "${story}", create a simple 3-day promotional plan for Instagram. Suggest a post type (e.g., Image, Reel) and a compelling caption for each day. Return a valid JSON array of objects, where each object has "day", "post_type", and "caption" keys.`;
 
-// Main function to create product
-export const createProduct = async (req, res) => {
-  try {
-    // 1. Get input
-    const { productName, category, materials } = req.body;
-    const relativeImagePath = req.file.path; // e.g., 'uploads/filename.jpg'
-
-    // 2. Generate AI content
-    const aiContent = await generateAIContent(relativeImagePath, productName);
-    const ai_description = aiContent.description;
-    const ai_story = aiContent.story;
-
-    // 3. Create blockchain certificate
-    const blockchain_cert_id = await createBlockchainCertificate(ai_story);
-
-    // 4. Save everything to the database
-    const newProduct = await pool.query(
-      `INSERT INTO products 
-        (artisan_id, product_name, category, materials, image_url, ai_description, ai_story, blockchain_cert_id) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [1, productName, category, materials, relativeImagePath, ai_description, ai_story, blockchain_cert_id]
-    );
-
-    // 5. Send response
-    res.status(201).json({
-      product: newProduct.rows[0],
-      aiContent,
-      blockchain_cert_id
-    });
-
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text().replace(/```json|```/g, "").trim();
+    const plan = JSON.parse(responseText);
+    res.json(plan);
   } catch (error) {
-    console.error("Error creating product:", error);
+    console.error("Error generating social plan:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const verifyCertificate = async (req, res) => {
+  try {
+    const { certId } = req.params; // e.g., "ART-CERT-1"
+    const recordIndex = BigInt(certId.split('-')[2]);
+
+    const canister = await getCanister();
+    const result = await canister.getRecord(recordIndex);
+    
+    // The result from the canister might be wrapped in an array or optional type
+    const story_from_blockchain = result[0] || "Record not found."; 
+    
+    res.json({ story_from_blockchain });
+  } catch (error) {
+    console.error("Error verifying certificate:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
