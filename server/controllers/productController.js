@@ -9,9 +9,16 @@ const canisterId = "uxrrr-q7777-77774-qaaaq-cai"; // Your Canister ID
 
 // --- HELPER FUNCTIONS ---
 const getCanister = async () => {
-  const agent = new HttpAgent({ host: "http://127.0.0.1:4943" });
-  await agent.fetchRootKey(); // Required for local development
-  return Actor.createActor(idlFactory, { agent, canisterId });
+  // Use the public ngrok URL from your terminal
+  const agent = new HttpAgent({ host: "https://30ea984be3df.ngrok-free.app" }); 
+
+  // You do not need fetchRootKey() for the live canister or ngrok
+  // await agent.fetchRootKey(); 
+
+  return Actor.createActor(idlFactory, { 
+    agent, 
+    canisterId: "uxrrr-q7777-77774-qaaaq-cai" // Use your LOCAL canister ID
+  });
 };
 
 // This function uses Gemini for analysis, creative writing, AND translation
