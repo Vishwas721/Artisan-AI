@@ -60,8 +60,7 @@ This feature automates the complex world of digital advertising.
 See ArtisanAI in action! Here is a quick walkthrough of our prototype, showcasing the journey of an artisan from onboarding to making their first AI-assisted sale.
 
 
-
-Live Demo:((https://artisan-ai-one.vercel.app/))  ---
+### ➡️ [**Explore the Live Demo**](https://artisan-ai-one.vercel.app/) ⬅️
 
 ## 🛠️ Technology Stack
 
