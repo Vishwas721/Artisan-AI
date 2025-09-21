@@ -20,7 +20,7 @@ const getCanister = async () => {
 // --- UPDATE createProduct function ---
 export const createProduct = async (req, res) => {
   try {
-    const { productName, category, materials, targetLanguage, dimensions, useCases, careInstructions, artisanName } = req.body;
+    const { productName, category, materials, targetLanguage, dimensions, useCases, careInstructions, artisanName, approxWeight, multiPurpose } = req.body;
     const relativeImagePath = req.file.path;
 
     const artisanId = 1;
@@ -28,7 +28,7 @@ export const createProduct = async (req, res) => {
     const brandProfile = profileResult.rows[0]?.brand_profile || {};
 
     const aiContent = await generateAIContent(relativeImagePath, productName, targetLanguage, brandProfile, 
-      { dimensions, useCases, careInstructions, artisanName }
+      { dimensions, useCases, careInstructions, approxWeight, multiPurpose, artisanName }
     );
 
     // --- NEW: Get hashtags from the AI response (using English version for consistency) ---
@@ -61,14 +61,14 @@ async function generateAIContent(imagePath, productName, targetLanguage, brandPr
     Artisan Style: ${brandProfile.style || 'Authentic and high-quality.'}
   `;
 
-  const prompt = `You are a world-class marketing assistant for an artisan named '${details.artisanName}'. Their brand identity is: ${brandIdentity}. All content MUST be cohesive and reflect this style.
+  const prompt = `You are a world-class e-commerce marketing assistant for an artisan named '${details.artisanName}'. Their brand identity is: ${brandIdentity}. The brand voice MUST be consistent and personal.
   
   For the product named "${productName}", analyze the provided image.
   
   Your task is to generate:
-  1. A "story": Write a short, personal story from the perspective of '${details.artisanName}'. Start with a strong, one-sentence emotional hook that grabs attention.
-  2. A "description": Be poetic and practical. Weave in these details: Dimensions are '${details.dimensions}', ideal use cases are '${details.useCases}', and specific care instructions are '${details.careInstructions}'.
-  3. "hashtags": Provide 7-9 relevant hashtags, mixing broad, niche, location (#madeinindia), and style tags (#bohochic).
+  1. A "story": Write a short, personal story from '${details.artisanName}'s perspective that is cohesive with their brand identity. It MUST start with a strong, one-sentence emotional hook.
+  2. A "description": Write a poetic but highly practical description for an e-commerce site. You MUST include: dimensions ('${details.dimensions}'), approximate weight ('${details.approxWeight}'), specific care instructions ('${details.careInstructions}'), and multi-purpose suggestions ('${details.multiPurpose}').
+  3. "hashtags": Provide 12-15 relevant hashtags, mixing broad, niche, and trending buyer-focused tags like #homedecorindia, #sustainablehome, and #bohodecorstyle.
   
   Return a valid JSON object where the top-level keys are "en" and "${targetLanguage}". Each of these keys must contain an object with its own "description", "story", and "hashtags".`;
   const absoluteImagePath = path.join(process.cwd(), imagePath);
@@ -108,15 +108,17 @@ export const generateSocialPlan = async (req, res) => {
     const story = productResult.rows[0].ai_story.en.story; // Use English story
     const productName = productResult.rows[0].product_name;
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `You are a social media marketing expert for an artisan. The product is "${productName}" and its story is: "${story}".
-    Create a 3-day promotional plan for Instagram.
+const prompt = `You are a world-class social media strategist for an artisan. The product is "${productName}" and its story is: "${story}".
+Create a 3-day promotional plan for Instagram.
 
-    For each day's caption, you MUST:
-    1.  Use a storytelling element.
-    2.  Include a DIFFERENT and VARIED call-to-action (CTA) to drive engagement. On Day 1, ask a question. On Day 2, ask to "Tag a friend". On Day 3, use urgency and a direct shop link.
-    3.  Include relevant hashtags.
+For each day's caption, you MUST:
+1.  Use a storytelling element from the artisan's personal story.
+2.  Include a UNIQUE and highly engaging call-to-action (CTA).
+3.  Day 1: Suggest an interactive element like an Instagram Story poll AND ask an open-ended question in the caption (e.g., "What cherished item...?")
+4.  Day 2: Ask a direct "this or that" question to spark comments (e.g., "Fruit basket or wall decor? Comment below!").
+5.  Day 3: Use scarcity/urgency and provide a crystal-clear CTA like "Only 3 remain! DM us 'ARTISAN' to reserve yours, or tap the link in our bio before they're gone."
 
-    Return a valid JSON array of objects, where each object has "day", "post_type", and "caption" keys.`;
+Return a valid JSON array of objects, where each object has "day", "post_type", and "caption" keys.`;
     const result = await model.generateContent(prompt);
     const responseText = result.response.text().replace(/```json|```/g, "").trim();
     const plan = JSON.parse(responseText);

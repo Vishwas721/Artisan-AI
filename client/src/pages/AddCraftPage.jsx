@@ -12,6 +12,8 @@ const AddCraftPage = () => {
     useCases: '',
       careInstructions: '', // Add this
   artisanName: 'Maria', 
+    approxWeight: '',       // Add this
+  multiPurpose: '', // Add this
   });
   const [image, setImage] = useState(null);
   const [targetLanguage, setTargetLanguage] = useState('hi'); // Default to Hindi
@@ -45,7 +47,9 @@ const AddCraftPage = () => {
     data.append('image', image);
     data.append('targetLanguage', targetLanguage); 
     data.append('careInstructions', formData.careInstructions);
-data.append('artisanName', formData.artisanName);// Add language to form data
+data.append('artisanName', formData.artisanName);
+data.append('approxWeight', formData.approxWeight);
+data.append('multiPurpose', formData.multiPurpose);// Add language to form data
 
     try {
       const response = await createProduct(data);
@@ -69,6 +73,8 @@ data.append('artisanName', formData.artisanName);// Add language to form data
   <input type="text" name="useCases" placeholder="Ideal use cases (e.g., meditation room, desk decor)" onChange={handleInputChange} />
     <input type="text" name="artisanName" placeholder="Artisan Name (e.g., Maria)" value={formData.artisanName} onChange={handleInputChange} />
   <input type="text" name="careInstructions" placeholder="Care Instructions (e.g., Wipe with a damp cloth)" onChange={handleInputChange} />
+    <input type="text" name="approxWeight" placeholder="Approx. Weight (e.g., 500g)" onChange={handleInputChange} />
+  <input type="text" name="multiPurpose" placeholder="More uses (e.g., gift packaging, table decor)" onChange={handleInputChange} />
   <input type="file" onChange={handleFileChange} required />
   {/* ... rest of the form ... */}
         <select value={targetLanguage} onChange={(e) => setTargetLanguage(e.target.value)}>
