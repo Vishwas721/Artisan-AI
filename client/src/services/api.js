@@ -21,3 +21,7 @@ export const generateSocialPlan = (id) => {
 export const verifyCertificate = (certId) => {
   return apiClient.get(`/verify/${certId}`);
 };
+
+export const saveArtisanProfile = (profileData) => {
+  return apiClient.put('/artisans/profile', profileData);
+};

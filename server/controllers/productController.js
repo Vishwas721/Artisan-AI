@@ -17,22 +17,24 @@ const getCanister = async () => {
   return Actor.createActor(idlFactory, { agent, canisterId });
 };
 
-async function generateAIContent(imagePath, productName, targetLanguage) {
+async function generateAIContent(imagePath, productName, targetLanguage, brandProfile) {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  const absoluteImagePath = path.join(process.cwd(), imagePath);
-  const imageBuffer = await fs.readFile(absoluteImagePath);
-  const imageBase64 = imageBuffer.toString("base64");
+  const brandIdentity = `
+    Artisan Story: ${brandProfile.story || 'A passionate creator of handmade goods.'}
+    Artisan Style: ${brandProfile.style || 'Authentic and high-quality.'}
+  `;
 
-  const prompt = `You are a marketing expert for handmade crafts. For the product named "${productName}", analyze the provided image.
+  const prompt = `You are an AI assistant for an artisan with this brand identity: ${brandIdentity}. All content you generate MUST reflect this unique style.
+
+  For the product named "${productName}", analyze the provided image.
   Generate a compelling product description and a short, emotional story about the artisan's tradition.
   Return a valid JSON object with two top-level keys: "en" and "${targetLanguage}".
   Each key should contain an object with its own "description" and "story".`;
-
-  const imagePart = {
-    inlineData: { data: imageBase64, mimeType: "image/jpeg" },
-  };
-
+  const absoluteImagePath = path.join(process.cwd(), imagePath);
+  const imageBuffer = await fs.readFile(absoluteImagePath);
+  const imageBase64 = imageBuffer.toString("base64");
+  const imagePart = { inlineData: { data: imageBase64, mimeType: "image/jpeg" }};
   const result = await model.generateContent([prompt, imagePart]);
   const responseText = result.response.text().replace(/```json|```/g, "").trim();
   return JSON.parse(responseText);
@@ -40,24 +42,33 @@ async function generateAIContent(imagePath, productName, targetLanguage) {
 
 // --- CONTROLLER EXPORTS ---
 
+// --- UPDATE createProduct function ---
 export const createProduct = async (req, res) => {
   try {
     const { productName, category, materials, targetLanguage } = req.body;
     const relativeImagePath = req.file.path;
 
-    const aiContent = await generateAIContent(relativeImagePath, productName, targetLanguage);
-    const ai_story_en = aiContent.en.story; // Use English story for the certificate
+    // 1. Fetch the artisan's brand profile
+    const artisanId = 1; // Hardcoded
+    const profileResult = await pool.query("SELECT brand_profile FROM artisans WHERE id = $1", [artisanId]);
+    const brandProfile = profileResult.rows[0]?.brand_profile || {}; // Use empty object if no profile
 
+    // 2. Pass the profile to the AI function
+    const aiContent = await generateAIContent(relativeImagePath, productName, targetLanguage, brandProfile);
+
+    // ... rest of the function remains the same ...
+    const ai_story_en = aiContent.en.story;
     const canister = await getCanister();
     const blockchain_cert_id = (await canister.addRecord(ai_story_en)).toString();
 
     const newProduct = await pool.query(
       `INSERT INTO products (artisan_id, product_name, category, materials, image_url, ai_description, ai_story, blockchain_cert_id) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [1, productName, category, materials, relativeImagePath, aiContent, aiContent, blockchain_cert_id]
+      [artisanId, productName, category, materials, relativeImagePath, aiContent, aiContent, blockchain_cert_id]
     );
 
     res.status(201).json({ product: newProduct.rows[0] });
+
   } catch (error) {
     console.error("Error creating product:", error);
     res.status(500).json({ error: "Internal Server Error" });
