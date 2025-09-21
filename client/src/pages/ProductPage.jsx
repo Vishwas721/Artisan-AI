@@ -60,7 +60,18 @@ const ProductPage = () => {
       
       <h3>Blockchain Certificate ID:</h3>
       <Link to={`/verify/${product.blockchain_cert_id}`}>{product.blockchain_cert_id}</Link>
-
+            {product.hashtags && product.hashtags.length > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <h3>Suggested Hashtags</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {product.hashtags.map((tag, index) => (
+              <span key={index} style={{ background: '#f0f0f0', padding: '4px 8px', borderRadius: '12px', fontSize: '14px' }}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <hr />
       
       <h2>Marketing Assistant</h2>

@@ -17,7 +17,7 @@ const getCanister = async () => {
   return Actor.createActor(idlFactory, { agent, canisterId });
 };
 
-async function generateAIContent(imagePath, productName, targetLanguage, brandProfile) {
+async function generateAIContent(imagePath, productName, targetLanguage, brandProfile, details) {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const brandIdentity = `
@@ -25,12 +25,16 @@ async function generateAIContent(imagePath, productName, targetLanguage, brandPr
     Artisan Style: ${brandProfile.style || 'Authentic and high-quality.'}
   `;
 
-  const prompt = `You are an AI assistant for an artisan with this brand identity: ${brandIdentity}. All content you generate MUST reflect this unique style.
-
+  const prompt = `You are a world-class marketing assistant for an artisan with this brand identity: ${brandIdentity}. All content MUST reflect this style.
+  
   For the product named "${productName}", analyze the provided image.
-  Generate a compelling product description and a short, emotional story about the artisan's tradition.
-  Return a valid JSON object with two top-level keys: "en" and "${targetLanguage}".
-  Each key should contain an object with its own "description" and "story".`;
+  
+  Your task is to generate:
+  1.  A "story": Start with a strong, one-sentence emotional hook. Total length should be 3-4 sentences.
+  2.  A "description": Be both poetic and practical. Weave in these details: Dimensions are '${details.dimensions}' and ideal use cases are '${details.useCases}'.
+  3.  "hashtags": Provide 5-7 relevant, niche hashtags for platforms like Instagram (e.g., #bohodecor, #mindfulhome, #handcraftedart).
+  
+  Return a valid JSON object with three keys: "en" and "${targetLanguage}". Each of these keys should contain an object with its own "description", "story", and "hashtags".`;
   const absoluteImagePath = path.join(process.cwd(), imagePath);
   const imageBuffer = await fs.readFile(absoluteImagePath);
   const imageBase64 = imageBuffer.toString("base64");
@@ -45,26 +49,27 @@ async function generateAIContent(imagePath, productName, targetLanguage, brandPr
 // --- UPDATE createProduct function ---
 export const createProduct = async (req, res) => {
   try {
-    const { productName, category, materials, targetLanguage } = req.body;
+    const { productName, category, materials, targetLanguage, dimensions, useCases } = req.body;
     const relativeImagePath = req.file.path;
 
-    // 1. Fetch the artisan's brand profile
-    const artisanId = 1; // Hardcoded
+    const artisanId = 1;
     const profileResult = await pool.query("SELECT brand_profile FROM artisans WHERE id = $1", [artisanId]);
-    const brandProfile = profileResult.rows[0]?.brand_profile || {}; // Use empty object if no profile
+    const brandProfile = profileResult.rows[0]?.brand_profile || {};
 
-    // 2. Pass the profile to the AI function
-    const aiContent = await generateAIContent(relativeImagePath, productName, targetLanguage, brandProfile);
+    const aiContent = await generateAIContent(relativeImagePath, productName, targetLanguage, brandProfile, { dimensions, useCases });
 
-    // ... rest of the function remains the same ...
+    // --- NEW: Get hashtags from the AI response (using English version for consistency) ---
+    const hashtags = aiContent.en.hashtags; 
+    
     const ai_story_en = aiContent.en.story;
     const canister = await getCanister();
     const blockchain_cert_id = (await canister.addRecord(ai_story_en)).toString();
 
+    // --- UPDATED: Add 'hashtags' and the '$9' placeholder to the INSERT query ---
     const newProduct = await pool.query(
-      `INSERT INTO products (artisan_id, product_name, category, materials, image_url, ai_description, ai_story, blockchain_cert_id) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [artisanId, productName, category, materials, relativeImagePath, aiContent, aiContent, blockchain_cert_id]
+      `INSERT INTO products (artisan_id, product_name, category, materials, image_url, ai_description, ai_story, blockchain_cert_id, hashtags) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [artisanId, productName, category, materials, relativeImagePath, aiContent, aiContent, blockchain_cert_id, hashtags] // Add 'hashtags' here
     );
 
     res.status(201).json({ product: newProduct.rows[0] });
@@ -99,7 +104,15 @@ export const generateSocialPlan = async (req, res) => {
     const story = productResult.rows[0].ai_story.en.story; // Use English story
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `You are a social media marketing expert for artisans. Based on this product story: "${story}", create a simple 3-day promotional plan for Instagram. Suggest a post type (e.g., Image, Reel) and a compelling caption for each day. Return a valid JSON array of objects, where each object has "day", "post_type", and "caption" keys.`;
+const prompt = `You are a social media marketing expert for artisans. Based on this product story: "${story}", create a simple 3-day promotional plan for Instagram.
+
+For each day, suggest a post type and create a compelling caption that includes:
+- A storytelling element based on the product story.
+- A strong call-to-action (CTA) to drive engagement (e.g., ask a question, "Tag a friend who...").
+- On the final day, create urgency or use social proof (e.g., "Only 3 left!", "Our collectors say this brings peace to their home.").
+- Include a consistent shop link or call to action like "Shop link in bio."
+
+Return a valid JSON array of objects, where each object has "day", "post_type", and "caption" keys.`;
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text().replace(/```json|```/g, "").trim();

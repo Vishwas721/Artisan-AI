@@ -8,6 +8,8 @@ const AddCraftPage = () => {
     productName: '',
     category: '',
     materials: '',
+    dimensions: '', // Add this
+    useCases: '',
   });
   const [image, setImage] = useState(null);
   const [targetLanguage, setTargetLanguage] = useState('hi'); // Default to Hindi
@@ -36,6 +38,8 @@ const AddCraftPage = () => {
     data.append('productName', formData.productName);
     data.append('category', formData.category);
     data.append('materials', formData.materials);
+      data.append('dimensions', formData.dimensions); // Add this
+  data.append('useCases', formData.useCases);   
     data.append('image', image);
     data.append('targetLanguage', targetLanguage); // Add language to form data
 
@@ -57,7 +61,10 @@ const AddCraftPage = () => {
         <input type="text" name="productName" placeholder="Product Name" onChange={handleInputChange} required />
         <input type="text" name="category" placeholder="Category" onChange={handleInputChange} />
         <input type="text" name="materials" placeholder="Materials" onChange={handleInputChange} />
-        <input type="file" onChange={handleFileChange} required />
+        <input type="text" name="dimensions" placeholder="Dimensions (e.g., 12x12 inches)" onChange={handleInputChange} />
+  <input type="text" name="useCases" placeholder="Ideal use cases (e.g., meditation room, desk decor)" onChange={handleInputChange} />
+  <input type="file" onChange={handleFileChange} required />
+  {/* ... rest of the form ... */}
         <select value={targetLanguage} onChange={(e) => setTargetLanguage(e.target.value)}>
           <option value="hi">Hindi</option>
           <option value="es">Spanish</option>
