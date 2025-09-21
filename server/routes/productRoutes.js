@@ -1,25 +1,30 @@
 import express from 'express';
-import { 
-  createProduct, 
-  getProductById, 
-  generateSocialPlan, 
-  verifyCertificate 
-} from '../controllers/productController.js';
+import { createProduct, getProductById, generateSocialPlan, verifyCertificate } from '../controllers/productController.js';
 import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-const router = express.Router();
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+// Configure Multer to use Cloudinary for storage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'artisan-ai-uploads', // A folder name in your Cloudinary account
+    format: async (req, file) => 'jpg',
+    public_id: (req, file) => Date.now() + '-' + file.originalname,
   },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
 });
 
 const upload = multer({ storage: storage });
+const router = express.Router();
 
+// Your routes remain the same
 router.get('/products/:id', getProductById);
 router.post('/products', upload.single('image'), createProduct);
 router.post('/products/:id/social-plan', generateSocialPlan);

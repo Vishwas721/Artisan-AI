@@ -21,28 +21,28 @@ const getCanister = async () => {
 export const createProduct = async (req, res) => {
   try {
     const { productName, category, materials, targetLanguage, dimensions, useCases, careInstructions, artisanName, approxWeight, multiPurpose } = req.body;
-    const relativeImagePath = req.file.path;
+
+    // --- FIX: Only one variable is needed for the image URL ---
+    const imageUrl = req.file.path; 
 
     const artisanId = 1;
     const profileResult = await pool.query("SELECT brand_profile FROM artisans WHERE id = $1", [artisanId]);
     const brandProfile = profileResult.rows[0]?.brand_profile || {};
 
-    const aiContent = await generateAIContent(relativeImagePath, productName, targetLanguage, brandProfile, 
+    // --- FIX: The function call now has the correct arguments ---
+    const aiContent = await generateAIContent(imageUrl, productName, targetLanguage, brandProfile, 
       { dimensions, useCases, careInstructions, approxWeight, multiPurpose, artisanName }
-    );
+    ); 
 
-    // --- NEW: Get hashtags from the AI response (using English version for consistency) ---
-    const hashtags = aiContent.en.hashtags; 
-    
+    const hashtags = aiContent.en.hashtags;
     const ai_story_en = aiContent.en.story;
     const canister = await getCanister();
     const blockchain_cert_id = (await canister.addRecord(ai_story_en)).toString();
 
-    // --- UPDATED: Add 'hashtags' and the '$9' placeholder to the INSERT query ---
     const newProduct = await pool.query(
       `INSERT INTO products (artisan_id, product_name, category, materials, image_url, ai_description, ai_story, blockchain_cert_id, hashtags) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [artisanId, productName, category, materials, relativeImagePath, aiContent, aiContent, blockchain_cert_id, hashtags] // Add 'hashtags' here
+      [artisanId, productName, category, materials, imageUrl, aiContent, aiContent, blockchain_cert_id, hashtags]
     );
 
     res.status(201).json({ product: newProduct.rows[0] });
@@ -53,7 +53,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-async function generateAIContent(imagePath, productName, targetLanguage, brandProfile, details) {
+async function generateAIContent(imageUrl, productName, targetLanguage, brandProfile, details) { // Correct
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const brandIdentity = `
@@ -61,20 +61,24 @@ async function generateAIContent(imagePath, productName, targetLanguage, brandPr
     Artisan Style: ${brandProfile.style || 'Authentic and high-quality.'}
   `;
 
-  const prompt = `You are a world-class e-commerce marketing assistant for an artisan named '${details.artisanName}'. Their brand identity is: ${brandIdentity}. The brand voice MUST be consistent and personal.
-  
-  For the product named "${productName}", analyze the provided image.
-  
-  Your task is to generate:
-  1. A "story": Write a short, personal story from '${details.artisanName}'s perspective that is cohesive with their brand identity. It MUST start with a strong, one-sentence emotional hook.
-  2. A "description": Write a poetic but highly practical description for an e-commerce site. You MUST include: dimensions ('${details.dimensions}'), approximate weight ('${details.approxWeight}'), specific care instructions ('${details.careInstructions}'), and multi-purpose suggestions ('${details.multiPurpose}').
-  3. "hashtags": Provide 12-15 relevant hashtags, mixing broad, niche, and trending buyer-focused tags like #homedecorindia, #sustainablehome, and #bohodecorstyle.
-  
-  Return a valid JSON object where the top-level keys are "en" and "${targetLanguage}". Each of these keys must contain an object with its own "description", "story", and "hashtags".`;
-  const absoluteImagePath = path.join(process.cwd(), imagePath);
-  const imageBuffer = await fs.readFile(absoluteImagePath);
-  const imageBase64 = imageBuffer.toString("base64");
-  const imagePart = { inlineData: { data: imageBase64, mimeType: "image/jpeg" }};
+const prompt = `You are a world-class e-commerce marketing assistant for an artisan named '${details.artisanName}'. Their brand identity is: ${brandIdentity}. The brand voice MUST be consistent and personal.
+
+For the product named "${productName}", analyze the provided image.
+
+Your task is to generate:
+1.  A "story": A short, personal story from '${details.artisanName}'s perspective with a strong emotional hook.
+2.  A "description": A poetic and highly practical description for an e-commerce site. You MUST include: dimensions ('${details.dimensions}'), approximate weight ('${details.approxWeight}'), care instructions ('${details.careInstructions}'), and multi-purpose suggestions ('${details.multiPurpose}').
+3.  "hashtags": Provide a valid JSON array of 12-15 relevant string hashtags (e.g., ["#bohodecor", "#mindfulhome", "#handcraftedart"]).
+
+Return a valid JSON object where the top-level keys are "en" and "${targetLanguage}". Each of these keys must contain an object with its own "description", "story", and "hashtags".`;
+ const imageResponse = await fetch(imageUrl);
+  const imageBuffer = await imageResponse.arrayBuffer();
+  const imageBase64 = Buffer.from(imageBuffer).toString("base64");
+
+  const imagePart = {
+    inlineData: { data: imageBase64, mimeType: "image/jpeg" },
+  };
+
   const result = await model.generateContent([prompt, imagePart]);
   const responseText = result.response.text().replace(/```json|```/g, "").trim();
   return JSON.parse(responseText);
