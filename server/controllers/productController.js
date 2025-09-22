@@ -66,9 +66,10 @@ export const createProduct = async (req, res) => {
     );
 
     const hashtags = aiContent.en.hashtags;
-    const ai_story_en = aiContent.en.story;
-    const canister = await getCanister();
-    const blockchain_cert_id = (await canister.addRecord(ai_story_en)).toString();
+const ai_story_en = aiContent.en.story;
+// --- BLOCKCHAIN CALL DISABLED FOR LIVE DEMO ---
+console.log("Blockchain call skipped for live demo.");
+const blockchain_cert_id = `CERT-DEMO-${Date.now()}`; // Use a placeholder
 
     const newProduct = await pool.query(
       `INSERT INTO products (artisan_id, product_name, category, materials, image_url, ai_description, ai_story, blockchain_cert_id, hashtags) 
@@ -135,21 +136,11 @@ export const generateSocialPlan = async (req, res) => {
 };
 
 export const verifyCertificate = async (req, res) => {
-  try {
-    const { certId } = req.params;
-    const recordIndex = BigInt(certId.split('-')[2]);
-
-    const canister = await getCanister();
-    const result = await canister.getRecord(recordIndex);
-    
-    const story_from_blockchain = result[0] || "Record not found."; 
-    
-    res.json({ story_from_blockchain });
-} catch (error) {
-  // This logs the specific, human-readable error message
-  console.error("Error creating product:", error.detail || error.message); 
-  res.status(500).json({ error: "Internal Server Error" });
-}
+  // Blockchain verification is disabled for this live prototype.
+  // The feature is fully demonstrated in our video submission.
+  res.json({ 
+    story_from_blockchain: "This is a placeholder certificate. The live blockchain feature is demonstrated in our video submission." 
+  });
 };
 
 export const updateProduct = async (req, res) => {
