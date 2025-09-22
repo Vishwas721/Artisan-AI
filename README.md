@@ -8,6 +8,8 @@
 
 ## 🌟 The Vision
 
+note:The live prototype has the Dfinity blockchain integration temporarily disabled to ensure 24/7 stability for judging. This feature is fully functional and is demonstrated in our 5-minute video submission using a local replica.
+
 India's 200 million artisans are the keepers of a priceless cultural legacy. Yet, in the digital age, their voices are often lost. Our vision is to spark an artisanal renaissance by equipping every craftsperson with a personal AI assistant, ensuring their heritage not only survives but thrives on a global stage.
 
 ---
