@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:5000/api', // Local Backend URL for the demo
+  baseURL: 'https://artisan-ai-1.onrender.com/api', // Your live Render backend URL
 });
 
 export const createProduct = (formData) => {
